@@ -7,7 +7,7 @@ import (
 )
 
 func authorizeTokens(token string) {
-
+	defer WaitGroup.Done()
 	per := Properties{
 		UserTokens: []string{token},
 		SandboxId:  "RETAIL",
@@ -26,11 +26,14 @@ func authorizeTokens(token string) {
 	req.Header.SetMethod("POST")
 	req.SetRequestURI("https://xsts.auth.xboxlive.com/xsts/authorize")
 	res := fasthttp.AcquireResponse()
+	
+	defer fasthttp.ReleaseRequest(req)
+	defer fasthttp.ReleaseResponse(res)
 
 	if err := fasthttp.Do(req, res); err != nil {
-		// I don't want to go to school mommy
+		return
 	}
-	fasthttp.ReleaseRequest(req)
+	
 
 	body := res.Body()
 
@@ -42,7 +45,4 @@ func authorizeTokens(token string) {
 			authorizedTokens = append(authorizedTokens, "XBL3.0 x="+tokenResponse.DisplayClaims.Xui[0].Uhs+";"+tokenResponse.Token+"")
 		}
 	}
-
-	fasthttp.ReleaseResponse(res)
-	WaitGroup.Done()
 }
